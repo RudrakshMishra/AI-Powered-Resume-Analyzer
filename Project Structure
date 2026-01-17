@@ -1,0 +1,34 @@
+ai-resume-analyzer/
+│
+├── backend/
+│   ├── app/
+│   │   ├── main.py
+│   │   ├── config.py
+│   │   ├── database.py
+│   │   ├── models.py
+│   │   ├── schemas.py
+│   │   ├── resume_parser.py
+│   │   ├── ai_analyzer.py
+│   │   └── routes.py
+│   │
+│   ├── requirements.txt
+│   └── .env.example
+│
+├── frontend/
+│   ├── src/
+│   │   ├── components/
+│   │   │   ├── UploadResume.jsx
+│   │   │   ├── Dashboard.jsx
+│   │   │   ├── KeywordCloud.jsx
+│   │   │   └── ScoreCard.jsx
+│   │   ├── pages/
+│   │   │   └── Home.jsx
+│   │   ├── services/api.js
+│   │   ├── App.jsx
+│   │   └── main.jsx
+│   │
+│   ├── tailwind.config.js
+│   └── package.json
+│
+├── README.md
+└── .gitignore
