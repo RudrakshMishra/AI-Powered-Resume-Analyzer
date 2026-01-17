@@ -1,0 +1,62 @@
+frontend/src/services/api.js
+import axios from "axios";
+
+export const analyzeResume = async (file) => {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const res = await axios.post("http://localhost:8000/analyze", formData);
+  return res.data;
+};
+
+
+UploadResume.jsx
+import { analyzeResume } from "../services/api";
+
+export default function UploadResume({ setResult }) {
+  const handleUpload = async (e) => {
+    const file = e.target.files[0];
+    const data = await analyzeResume(file);
+    setResult(data.result);
+  };
+
+  return (
+    <input
+      type="file"
+      className="border p-3 rounded"
+      onChange={handleUpload}
+    />
+  );
+}
+
+Dashboard.jsx
+export default function Dashboard({ result }) {
+  return (
+    <div className="bg-white p-6 rounded shadow">
+      <h2 className="text-xl font-bold mb-2">AI Feedback</h2>
+      <pre className="whitespace-pre-wrap">{result}</pre>
+    </div>
+  );
+}
+
+App.jsx
+import { useState } from "react";
+import UploadResume from "./components/UploadResume";
+import Dashboard from "./components/Dashboard";
+
+function App() {
+  const [result, setResult] = useState("");
+
+  return (
+    <div className="min-h-screen bg-gray-100 p-10">
+      <h1 className="text-3xl font-bold mb-6">
+        AI-Powered Resume Analyzer
+      </h1>
+
+      <UploadResume setResult={setResult} />
+      {result && <Dashboard result={result} />}
+    </div>
+  );
+}
+
+export default App;
