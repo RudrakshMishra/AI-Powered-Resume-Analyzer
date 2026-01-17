@@ -1,0 +1,109 @@
+backend/requirements.txt
+fastapi
+uvicorn
+python-multipart
+pymongo
+python-dotenv
+PyPDF2
+docx2txt
+openai
+
+backend/app/config.py
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+MONGO_URI = os.getenv("MONGO_URI")
+
+backend/app/database.py
+from pymongo import MongoClient
+from app.config import MONGO_URI
+
+client = MongoClient(MONGO_URI)
+db = client["resume_analyzer"]
+collection = db["resumes"]
+
+
+backend/app/resume_parser.py
+import PyPDF2
+import docx2txt
+
+def extract_text(file):
+    if file.filename.endswith(".pdf"):
+        reader = PyPDF2.PdfReader(file.file)
+        return " ".join(page.extract_text() for page in reader.pages)
+    
+    elif file.filename.endswith(".docx"):
+        return docx2txt.process(file.file)
+
+backend/app/ai_analyzer.py
+import openai
+from app.config import OPENAI_API_KEY
+
+openai.api_key = OPENAI_API_KEY
+
+def analyze_resume(text):
+    prompt = f"""
+    Analyze this resume:
+    1. Extract skills
+    2. Identify weak points
+    3. Suggest improvements
+    4. Give resume score out of 100
+
+    Resume:
+    {text}
+    """
+
+    response = openai.ChatCompletion.create(
+        model="gpt-4o-mini",
+        messages=[{"role": "user", "content": prompt}]
+    )
+
+    return response.choices[0].message.content
+
+backend/app/routes.py
+from fastapi import APIRouter, UploadFile, File
+from app.resume_parser import extract_text
+from app.ai_analyzer import analyze_resume
+from app.database import collection
+
+router = APIRouter()
+
+@router.post("/analyze")
+async def analyze(file: UploadFile = File(...)):
+    text = extract_text(file)
+    ai_result = analyze_resume(text)
+
+    record = {
+        "filename": file.filename,
+        "analysis": ai_result
+    }
+    collection.insert_one(record)
+
+    return {"result": ai_result}
+
+backend/app/main.py
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from app.routes import router
+
+app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+app.include_router(router)
+
+@app.get("/")
+def root():
+    return {"status": "AI Resume Analyzer Running"}
+
+.env.example
+OPENAI_API_KEY=your_openai_key
+MONGO_URI=mongodb://localhost:27017
